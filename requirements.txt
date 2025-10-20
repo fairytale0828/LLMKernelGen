@@ -8,7 +8,7 @@ torch
 datasets==3.6.0
 huggingface-hub
 multiprocess
-protobuf==5.29.4
+protobuf==3.20.3
 PyYAML
 transformers
 regex

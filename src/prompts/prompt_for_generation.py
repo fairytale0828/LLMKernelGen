@@ -1,9 +1,9 @@
 
 prompt = """
-You are an expert Python programmer specializing in NVIDIA Triton kernels, specifically targeting **AMD GPUs using the ROCm environment**.
+You are an expert Python programmer specializing in NVIDIA Triton kernels, specifically targeting **NVIDIA GPUs using the CUDA environment**.
 Your task is to generate a Python code snippet containing a Triton kernel based on the following request:
 
-**Target Platform:** AMD GPU (ROCm)
+**Target Platform:** NVIDIA GPU (CUDA)
 
 **Request:**
 {instruction}
@@ -13,7 +13,7 @@ Based on analysis, the implementation requires these EXACT function signatures:
 {function_signatures}
 
 **Output Requirements:**
-1.  **AMD Compatibility:** Generate code compatible with AMD GPUs and ROCm. **DO NOT use CUDA-specific features or functions (e.g., `tl.libdevice`).**
+1.  **NVIDIA Compatibility:** Generate code compatible with NVIDIA GPUs and CUDA. **YOU CAN use CUDA-specific features or functions (e.g., `tl.libdevice`).**
 2.  **Complete Code:** Generate a single, complete, and syntactically correct Python code block.
 3.  **Triton Kernel:** The core logic must be implemented within a Triton kernel function decorated with `@triton.jit`.
 4.  **Imports:** ALWAYS include necessary imports at the beginning:
@@ -46,14 +46,14 @@ Before completing, verify:
 3. No functions are called without being defined.
 4. No parameters are missing from your implementations.
 
-**Generated AMD ROCm Compatible Triton Kernel Code:**
+**Generated NVIDIA/CUDA Compatible Triton Kernel Code:**
 """
 
-prompt_rocm = """
-You are an expert Python programmer specializing in NVIDIA Triton kernels, specifically targeting **AMD GPUs using the ROCm environment**.
+prompt_cuda = """
+You are an expert Python programmer specializing in NVIDIA Triton kernels, specifically targeting **NVIDIA GPUs using the CUDA environment**.
 Your task is to generate a Python code snippet containing a Triton kernel based on the following request:
 
-**Target Platform:** AMD GPU (ROCm)
+**Target Platform:** NVIDIA GPU (CUDA)
 
 **Request:**
 {instruction}
@@ -63,7 +63,7 @@ Based on analysis, the implementation requires these EXACT function signatures:
 {function_signatures}
 
 **Output Requirements:**
-1.  **AMD Compatibility:** Generate code compatible with AMD GPUs and ROCm. **DO NOT use CUDA-specific features or functions (e.g., `tl.libdevice`).**
+1.  **NVIDIA Compatibility:** Generate code compatible with NVIDIA GPUs and CUDA. **YOU CAN use CUDA-specific features or functions (e.g., `tl.libdevice`).**
 2.  **Complete Code:** Generate a single, complete, and syntactically correct Python code block.
 3.  **Triton Kernel:** The core logic must be implemented within a Triton kernel function decorated with `@triton.jit`.
 4.  **Imports:** ALWAYS include necessary imports at the beginning:
@@ -92,6 +92,7 @@ Based on analysis, the implementation requires these EXACT function signatures:
 i. Autotuning key parameters BLOCK_SIZE, num_stages, num_warps. 
 ii. Better algorithmic implementation (e.g., naive softmax vs online softmax vs fused softmax), better memory access patterns and numerical stability. 
 iii. exploring all possible operator fusion strategies within the kernel while adhering to resource constraints.
+**Performance & Autotuning (IMPORTANT on NVIDIA):**
 Primary Autotuning Fields (Mandatory)
 1. BLOCK_M, BLOCK_N, BLOCK_K
    * Tile sizes for GEMM or other tensor contractions.

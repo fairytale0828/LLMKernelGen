@@ -322,9 +322,9 @@ class OptimAgent(Reflexion_Oneshot):
                 self.dataset.write_file(iter_path, start_idx=start_idx, datalen=data_len)
                 self.write_memories(mem_output_path)
 
-            os.system(f'rm -rf {exe_dir}')
-            os.system(f'rm -rf {perf_result_dir}')
-            os.system(f'rm -rf {perf_log_dir}')
+            # os.system(f'rm -rf {exe_dir}')
+            # os.system(f'rm -rf {perf_result_dir}')
+            # os.system(f'rm -rf {perf_log_dir}')
     
     def generate_solution(self, mem, temperature=0):
 
@@ -385,7 +385,7 @@ class OptimAgent(Reflexion_Oneshot):
         ]
 
         try:
-            response = self.model.generate(msg, temperature=temperature, max_tokens=15000)
+            response = self.model.generate(msg, temperature=temperature, max_tokens=1024)
         except:
             logger.info(f"failed to call LLM for {mem.ps.filename}")
             response = {"code": ""}

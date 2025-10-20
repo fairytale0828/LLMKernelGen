@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/max_reduction_perf.py", line 7, in <module>
+    from TritonBench_G_v1.max_reduction import max_dim  # Assuming max_dim is the function to test
+ModuleNotFoundError: No module named 'TritonBench_G_v1'

@@ -4,7 +4,7 @@ from prompts import prompt_for_reflection
 from memories.Memory import ReflexionMemory
 from models.Base import BaseModel
 
-
+# 待修改，会出现上下文太长和True为传递等问题
 
 class Reflexion(SequentialBaseAgent):
 

@@ -1,14 +1,14 @@
 from agents.OptimAgent import OptimAgent
-from models.OpenAI import OpenAIModel
+from models.DeepSeek import DeepSeekModel
 from dataloaders.TritonBench import TritonBench
 from args_config import load_config
 
 
 def main():
-    args = load_config("configs/tritonbench_optimagent_config.yaml")
+    args = load_config("configs/new_tritonbench_optimagent_config.yaml")
 
     # setup LLM model
-    model = OpenAIModel(api_key=args.api_key, model_id=args.model_id)
+    model = DeepSeekModel(api_key=args.api_key, model_id=args.model_id)
 
     # setup dataset
     dataset = TritonBench(statis_path=args.statis_path, 

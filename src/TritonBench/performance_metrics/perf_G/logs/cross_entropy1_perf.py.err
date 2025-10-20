@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/cross_entropy1_perf.py", line 6, in <module>
+    from TritonBench_G_v1.cross_entropy1 import cross_entropy_loss
+ModuleNotFoundError: No module named 'TritonBench_G_v1'

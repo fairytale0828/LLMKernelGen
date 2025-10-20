@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/mean_reduction_perf.py", line 7, in <module>
+    from TritonBench_G_v1.mean_reduction import mean_dim
+ModuleNotFoundError: No module named 'TritonBench_G_v1'

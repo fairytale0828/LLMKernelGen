@@ -1,0 +1,26 @@
+# LLM model
+api_key: "sk-5f0e4eb106fe4e63b6da198f2f09b89c"
+model_id: "deepseek-chat"
+temperature: 1.0
+
+# TritonBench
+statis_path: "./TritonBench/data/TritonBench_G_comp_alpac_v1_fixed_with_difficulty.json"
+py_folder: "./TritonBench/data/TritonBench_G_v1"
+instruction_path: "./TritonBench/data/TritonBench_G_comp_alpac_v1_fixed_with_difficulty.json"
+corpus_path: "./dataloaders/TB_eval/train_crawl.json"
+golden_metrics: "./TritonBench/performance_metrics/perf_G/golden_metrics"
+perf_ref_folder: null
+perf_G_path: "./TritonBench/performance_metrics/perf_G"
+py_interpreter: "python"
+result_path: null
+mem_file: null
+start_iter: 0
+datalen: null
+start_idx: 0
+target_kernels: ["add_example.py"]
+
+# agent
+output_path: "../outputs/optimagent_gpt41.jsonl"
+max_iteration: 3
+multi_thread: true
+ancestor_num: 5

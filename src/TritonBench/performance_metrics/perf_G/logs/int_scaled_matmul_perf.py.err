@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/int_scaled_matmul_perf.py", line 6, in <module>
+    from TritonBench_G_v1.int_scaled_matmul import int_scaled_matmul_kernel, Config
+ModuleNotFoundError: No module named 'TritonBench_G_v1'
