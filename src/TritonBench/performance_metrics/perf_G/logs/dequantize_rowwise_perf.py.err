@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/dequantize_rowwise_perf.py", line 11, in <module>
-    from TritonBench_G_v1.dequantize_rowwise import dequantize_rowwise
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

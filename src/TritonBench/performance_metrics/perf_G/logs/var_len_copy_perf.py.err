@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/var_len_copy_perf.py", line 6, in <module>
-    from TritonBench_G_v1.var_len_copy import launch_var_len_copy_triton
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

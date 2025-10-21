@@ -9,6 +9,7 @@ import triton.language as tl
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Correctly import the operator
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.rowwise_quantization_triton import quantize_rowwise
 from performance_utils import Performance_Metrics, do_bench_config
 

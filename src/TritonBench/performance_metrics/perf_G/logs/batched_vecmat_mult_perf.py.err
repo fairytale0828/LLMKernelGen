@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/batched_vecmat_mult_perf.py", line 6, in <module>
-    from TritonBench_G_v1.batched_vecmat_mult import batched_vecmat
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

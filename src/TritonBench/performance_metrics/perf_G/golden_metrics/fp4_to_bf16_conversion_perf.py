@@ -3,6 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.fp4_to_bf16_conversion import triton_f4_to_scaled_bf16
 from performance_utils import Performance_Metrics, do_bench_config
 

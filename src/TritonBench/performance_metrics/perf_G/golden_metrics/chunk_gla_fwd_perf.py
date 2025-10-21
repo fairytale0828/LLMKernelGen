@@ -3,6 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.chunk_gla_fwd import chunk_fwd_intra_gated_gk_fn, chunk_fwd_o_gated_gk_fn
 from performance_utils import Performance_Metrics, do_bench_config
 

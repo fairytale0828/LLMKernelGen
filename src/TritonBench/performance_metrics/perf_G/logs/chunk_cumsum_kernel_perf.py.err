@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/chunk_cumsum_kernel_perf.py", line 7, in <module>
-    from TritonBench_G_v1.chunk_cumsum_kernel import chunk_global_cumsum_scalar
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

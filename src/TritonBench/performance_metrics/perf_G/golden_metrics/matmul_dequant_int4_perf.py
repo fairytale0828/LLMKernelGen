@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Correctly import the operator
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.matmul_dequant_int4 import matmul_dequantize_int4_s1, quantize_int4
 from performance_utils import Performance_Metrics, do_bench_config
 

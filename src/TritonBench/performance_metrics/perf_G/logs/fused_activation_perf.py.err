@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/fused_activation_perf.py", line 6, in <module>
-    from TritonBench_G_v1.fused_activation import fused_add_mul_activation_torch
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

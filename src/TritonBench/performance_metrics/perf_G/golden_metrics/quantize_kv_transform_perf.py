@@ -3,6 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.quantize_kv_transform import destindex_copy_quantize_kv
 from performance_utils import Performance_Metrics, do_bench_config
 

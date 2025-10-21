@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/cache_transform_triton_perf.py", line 6, in <module>
-    from TritonBench_G_v1.cache_transform_triton import get_xine_cache
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

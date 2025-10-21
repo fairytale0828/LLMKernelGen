@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/vector_addition_perf.py", line 6, in <module>
-    from TritonBench_G_v1.vector_addition import add  # Assuming the file is named add_example.py
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

@@ -3,6 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.reversed_cumsum_scalar import chunk_global_reversed_cumsum_scalar
 from performance_utils import Performance_Metrics, do_bench_config
 

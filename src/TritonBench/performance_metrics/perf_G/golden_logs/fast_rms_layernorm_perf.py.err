@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/fast_rms_layernorm_perf.py", line 76, in <module>
+    op_perf.run_benchmark()
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/fast_rms_layernorm_perf.py", line 69, in run_benchmark
+    with open(file_path, 'w', encoding='utf8') as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/home/lishangzhan/triton/bench_performance/results/fast_rms_layernorm.json'

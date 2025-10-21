@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/mixed_sparse_attention_perf.py", line 6, in <module>
-    from TritonBench_G_v1.mixed_sparse_attention import _triton_mixed_sparse_attention
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/matrix_reduction_perf.py", line 6, in <module>
-    from TritonBench_G_v1.matrix_reduction import load_reduce
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/triton_conv2d_fwd_perf.py", line 6, in <module>
-    from TritonBench_G_v1.triton_conv2d_fwd import conv2d_forward
-ModuleNotFoundError: No module named 'TritonBench_G_v1'

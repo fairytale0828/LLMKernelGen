@@ -3,6 +3,7 @@ import os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.layer_norm_welfold import fused_native_layer_norm_no_welford
 from performance_utils import Performance_Metrics, do_bench_config
 

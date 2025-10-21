@@ -1,0 +1,41 @@
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/triton/backends/nvidia/compiler.py", line 292, in make_cubin
+    subprocess.run(cmd, shell=True, check=True)
+  File "/usr/lib/python3.10/subprocess.py", line 526, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '/usr/local/lib/python3.10/dist-packages/triton/backends/nvidia/bin/ptxas -lineinfo -v --gpu-name=sm_80 /tmp/tmptibcg2gt.ptx -o /tmp/tmptibcg2gt.ptx.o 2> /tmp/tmphxbbesai.log' returned non-zero exit status 255.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/fp4_to_bf16_conversion_perf.py", line 7, in <module>
+    from TritonBench_G_v1.fp4_to_bf16_conversion import triton_f4_to_scaled_bf16
+  File "/workspace/GEAK-agent/src/TritonBench/data/TritonBench_G_v1/fp4_to_bf16_conversion.py", line 276, in <module>
+    result_gold = test_triton_f4_to_scaled_bf16()
+  File "/workspace/GEAK-agent/src/TritonBench/data/TritonBench_G_v1/fp4_to_bf16_conversion.py", line 251, in test_triton_f4_to_scaled_bf16
+    output1 = triton_f4_to_scaled_bf16(x, s_e8m0, mx_block_size)
+  File "/workspace/GEAK-agent/src/TritonBench/data/TritonBench_G_v1/fp4_to_bf16_conversion.py", line 204, in triton_f4_to_scaled_bf16
+    triton_f4_to_scaled_bf16_kernel[grid](
+  File "/usr/local/lib/python3.10/dist-packages/triton/runtime/jit.py", line 345, in <lambda>
+    return lambda *args, **kwargs: self.run(grid=grid, warmup=False, *args, **kwargs)
+  File "/usr/local/lib/python3.10/dist-packages/triton/runtime/autotuner.py", line 156, in run
+    timings = {config: self._bench(*args, config=config, **kwargs) for config in pruned_configs}
+  File "/usr/local/lib/python3.10/dist-packages/triton/runtime/autotuner.py", line 156, in <dictcomp>
+    timings = {config: self._bench(*args, config=config, **kwargs) for config in pruned_configs}
+  File "/usr/local/lib/python3.10/dist-packages/triton/runtime/autotuner.py", line 133, in _bench
+    return do_bench(kernel_call, warmup=self.num_warmups, rep=self.num_reps, quantiles=(0.5, 0.2, 0.8))
+  File "/usr/local/lib/python3.10/dist-packages/triton/testing.py", line 106, in do_bench
+    fn()
+  File "/usr/local/lib/python3.10/dist-packages/triton/runtime/autotuner.py", line 114, in kernel_call
+    self.fn.run(
+  File "/usr/local/lib/python3.10/dist-packages/triton/runtime/jit.py", line 662, in run
+    kernel = self.compile(
+  File "/usr/local/lib/python3.10/dist-packages/triton/compiler/compiler.py", line 282, in compile
+    next_module = compile_ir(module, metadata)
+  File "/usr/local/lib/python3.10/dist-packages/triton/backends/nvidia/compiler.py", line 320, in <lambda>
+    stages["cubin"] = lambda src, metadata: self.make_cubin(src, metadata, options, self.capability)
+  File "/usr/local/lib/python3.10/dist-packages/triton/backends/nvidia/compiler.py", line 297, in make_cubin
+    raise RuntimeError(f'Internal Triton PTX codegen error: \n{log}')
+RuntimeError: Internal Triton PTX codegen error: 
+ptxas fatal   : Unresolved extern function '__ocml_pown_f32'
+

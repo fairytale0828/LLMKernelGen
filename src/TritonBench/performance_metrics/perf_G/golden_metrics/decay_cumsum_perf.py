@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import the Triton kernel launch function
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../data')))
 from TritonBench_G_v1.decay_cumsum import launch_fwd_decay_cumsum
 from performance_utils import Performance_Metrics, do_bench_config
 
