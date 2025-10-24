@@ -1,3 +1,0 @@
-/workspace/GEAK-agent/src/TritonBench/data/TritonBench_G_v1/attention_fwd_triton3.py:263: UserWarning: Triton Attention Output Resources. out of resource: shared memory, Required: 246784, Hardware limit: 166912. Reducing block sizes or `num_stages` may help.
-Use smaller block size 32.
-  warn(f"Triton Attention Output Resources. {E}\nUse smaller block size {_BLOCK_N}.")

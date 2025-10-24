@@ -3,7 +3,8 @@ import subprocess
 from multiprocessing import Pool, Lock, Value
 from tqdm import tqdm
 
-script_dir = "./golden_metrics"
+#选择golden_metrics还是自定义数据集
+script_dir = "./tmp"
 log_dir = "./logs"
 gpu_count = 8
 

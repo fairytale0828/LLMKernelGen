@@ -17,8 +17,8 @@ parser.add_argument('--debug', '-d', type=int, default=0, help='Folder to check'
 args = parser.parse_args()
 
 #待修改
-## check if HIP_VISIBLE_DEVICES environment variable is set
-# assert 'HIP_VISIBLE_DEVICES' in os.environ, "HIP_VISIBLE_DEVICES environment variable is not set. Please set it to the GPU you want to use."
+## check if CUDA_VISIBLE_DEVICES environment variable is set
+# assert 'CUDA_VISIBLE_DEVICES' in os.environ, "CUDA_VISIBLE_DEVICES environment variable is not set. Please set it to the GPU you want to use."
 
 #待修改code_call_exec_success_allclose
 backend = None

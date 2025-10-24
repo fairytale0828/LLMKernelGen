@@ -5,7 +5,7 @@ import argparse
 golden_metrics_folder = "./golden_metrics"
 golden_metrics_list = os.listdir(golden_metrics_folder)
 
-def write_file(input_folder_path, results_path):
+def write_file(input_folder_path, results_path, include_files=None):
     if os.path.exists('./tmp'):
         os.system('rm -rf ./tmp')
     os.mkdir('./tmp')
@@ -29,6 +29,10 @@ def write_file(input_folder_path, results_path):
     with open('./performance_utils.py', 'w') as f:
         f.write(performance_utils)
     input_file_list = os.listdir(input_folder_path)
+    # 针对只支持golden_metrics的部分op进行测试
+    if include_files:
+        include_set = set(include_files)
+        input_file_list = [f for f in input_file_list if f in include_set]
     for file in input_file_list:
         if file[-3:] == ".py":
             op = file[:-3]
@@ -72,6 +76,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='write_file')
     parser.add_argument('--input_folder_path', type=str, help='input_folder_path')
     parser.add_argument('--result_folder_path', type=str, help='result_folder_path')
+    parser.add_argument('--include', type=str, default="", help='comma separated whitelist, e.g. "add_example.py"')
     args = parser.parse_args()
     return args
 

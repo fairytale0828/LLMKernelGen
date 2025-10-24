@@ -17,10 +17,10 @@ mem_file: null
 start_iter: 0
 datalen: null
 start_idx: 0
-target_kernels: ["add_example.py"]
+target_kernels: ["layernorm_fwd_triton.py"]
 
 # agent
-output_path: "../outputs/optimagent_gpt41.jsonl"
-max_iteration: 3
+output_path: "../outputs/layernorm_fwd_triton.jsonl"
+max_iteration: 20
 multi_thread: true
 ancestor_num: 5

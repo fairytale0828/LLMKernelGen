@@ -1,6 +1,0 @@
-Traceback (most recent call last):
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/./golden_metrics/adam_update_triton_perf.py", line 54, in <module>
-    op_perf.get_do_bench_config()
-  File "/workspace/GEAK-agent/src/TritonBench/performance_metrics/perf_G/performance_utils.py", line 100, in get_do_bench_config
-    raise NotImplementedError("You must implement this method to make the runtime stable")
-NotImplementedError: You must implement this method to make the runtime stable

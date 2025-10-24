@@ -42,6 +42,7 @@ def matmul(c, a, b, M, N, K, BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K):
     matmul_kernel[triton.cdiv(M, BLOCK_SIZE_M), triton.cdiv(N, BLOCK_SIZE_N)](
         c, a, b, BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K
     )
+    return c
 
 
 
@@ -76,5 +77,29 @@ def test_matmul():
         "test_case_3": test_case_3,
         "test_case_4": test_case_4
     }
+
+    # # Call the matmul function multiple times
+    # matmul(c, a, b, M, N, K, BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K)
+    # test_case_1 = c.clone()
+
+    # # Additional test cases to cover more branches
+    # BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K = 128, 64, 128
+    # matmul(c, a, b, M, N, K, BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K)
+    # test_case_2 = c.clone()
+
+    # BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K = 256, 256, 64
+    # matmul(c, a, b, M, N, K, BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K)
+    # test_case_3 = c.clone()
+
+    # BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K = 32, 32, 32
+    # matmul(c, a, b, M, N, K, BLOCK_SIZE_M, BLOCK_SIZE_N, BLOCK_SIZE_K)
+    # test_case_4 = c.clone()
+
+    # return {
+    #     "test_case_1": test_case_1,
+    #     "test_case_2": test_case_2,
+    #     "test_case_3": test_case_3,
+    #     "test_case_4": test_case_4
+    # }
 
 result_gold = test_matmul()

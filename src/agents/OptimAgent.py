@@ -107,10 +107,95 @@ class OptimAgent(Reflexion_Oneshot):
                     "pass_exe": mem.pass_exe,
                     "pass_perf": mem.pass_perf,
                     "ms": mem.ms if hasattr(mem, 'ms') else None,
-                    "efficiency": mem.efficiency if hasattr(mem, 'efficiency') else None
+                    "efficiency": mem.efficiency if hasattr(mem, 'efficiency') else None,
+                    "time_perf": getattr(mem, 'time_perf', None),
+                    "eff_perf": getattr(mem, 'eff_perf', None)
                 }
                 output_dict[mem.ps.filename] = output
             json.dump(output_dict, f)
+
+    def _load_perf_json(self, path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def _key_from_size(self, input_size):
+        return json.dumps(input_size, sort_keys=True)
+
+    def _align_perf_by_size(self, gen_data, golden_data):
+        """
+        把两份 JSON (list[dict]) 按 input_size 对齐，返回 list[dict]
+        每项包含 gen/golden 的 ms, GB/s, TFLOPS
+        """
+        gmap = {self._key_from_size(d["input_size"]): d for d in gen_data}
+        rmap = {self._key_from_size(d["input_size"]): d for d in golden_data}
+        keys = sorted(set(gmap.keys()) & set(rmap.keys()))
+
+        aligned = []
+        for k in keys:
+            gd = gmap[k]
+            rd = rmap[k]
+            aligned.append({
+                "input_size": json.loads(k),
+                "gen_ms": gd["ms"], "gen_gbs": gd["GB/s"], "gen_tflops": gd["TFLOPS"],
+                "gold_ms": rd["ms"], "gold_gbs": rd["GB/s"], "gold_tflops": rd["TFLOPS"],
+            })
+        return aligned
+
+    def _select_best_index(self, aligned, by="gbs"):
+        """
+        选择“生成算子”的最佳点：
+        - by="ms":
+        - by="gbs":
+        - by="tflops":
+        """
+        if not aligned:
+            return None
+        if by == "ms":
+            return min(range(len(aligned)), key=lambda i: aligned[i]["gen_ms"])
+        if by == "tflops":
+            return max(range(len(aligned)), key=lambda i: aligned[i]["gen_tflops"])
+        # 默认 gbs
+        return max(range(len(aligned)), key=lambda i: aligned[i]["gen_gbs"])
+
+    def _build_compare_report(self, aligned):
+        """
+        time_ratio   = gold_ms / gen_ms     
+        gbs_ratio    = gen_gbs / gold_gbs    
+        tflops_ratio = gen_tflops / gold_tflops
+        """
+        rows = []
+        for row in aligned:
+            time_ratio   = (row["gold_ms"] / row["gen_ms"]) if row["gen_ms"] > 0 else None
+            gbs_ratio    = (row["gen_gbs"] / row["gold_gbs"]) if row["gold_gbs"] > 0 else None
+            tflops_ratio = (row["gen_tflops"] / row["gold_tflops"]) if row["gold_tflops"] > 0 else None
+            rows.append({
+                "input_size": row["input_size"],
+                "gen":   {"ms": row["gen_ms"],  "GB/s": row["gen_gbs"],  "TFLOPS": row["gen_tflops"]},
+                "gold":  {"ms": row["gold_ms"], "GB/s": row["gold_gbs"], "TFLOPS": row["gold_tflops"]},
+                "ratio": {"time": time_ratio, "GB/s": gbs_ratio, "TFLOPS": tflops_ratio}
+            })
+
+        def _avg(xs): 
+            xs = [x for x in xs if x is not None]
+            return sum(xs)/len(xs) if xs else None
+
+        avg_time   = _avg([r["ratio"]["time"]   for r in rows])
+        avg_gbs    = _avg([r["ratio"]["GB/s"]   for r in rows])
+        avg_tflops = _avg([r["ratio"]["TFLOPS"] for r in rows])
+
+        best_idx_by_gbs = self._select_best_index(aligned, by="gbs")
+        best_row = rows[best_idx_by_gbs] if best_idx_by_gbs is not None else None
+
+        summary = {
+            "avg_ratio": {
+                "time": avg_time,      
+                "GB/s": avg_gbs,      
+                "TFLOPS": avg_tflops    
+            },
+            "best_point_by_gbs": best_row 
+        }
+        return {"per_size": rows, "summary": summary}
+    
     
     def run(self, output_path=None, multi_thread=True, datalen=None, iteration_num=0, temperature=0, ancestor_num=2, start_idx=0, gpu_id=0, start_iter=0):
         """
@@ -221,6 +306,22 @@ class OptimAgent(Reflexion_Oneshot):
                     )
                     # For TritonBench, results are on disk, so the dict remains empty.
                     # The logic below will handle reading from files.
+                     
+                    golden_results_dir = perf_result_dir + "_golden"
+                    script_dir_golden = os.path.join(tmp_dir, "perf_gen_golden")
+                    perf_log_dir_golden = perf_log_dir + "_golden"
+
+                    self.dataset.write_perf_file(
+                        input_folder_path=self.dataset.py_folder,  
+                        results_path=golden_results_dir, 
+                        tmp_dir=script_dir_golden,
+                        include_files=self.dataset.target_kernels  
+                    )
+                    self.dataset.run_perf_scripts(
+                        gpu_id=gpu_id,
+                        script_dir=script_dir_golden,
+                        log_dir=perf_log_dir_golden
+                    )                   
 
                 # get ms and efficiency
                 # logger.info("\nparsing performance results")
@@ -271,6 +372,20 @@ class OptimAgent(Reflexion_Oneshot):
                             mem.ms = ms
                             mem.efficiency = efficiency
                             mem.raw_code.extend([ms, efficiency])
+                            golden_json = os.path.join(perf_result_dir + "_golden", mem.ps.filename[:-3] + ".json")
+                            if os.path.exists(golden_json):
+                                try:
+                                    _, golden_eff, golden_ms = self.dataset.calculate(golden_json, path_ref=None)
+                                    mem.time_perf = round((golden_ms / ms) , 2)          
+                                    mem.eff_perf  = round((efficiency / golden_eff), 2)  
+                                except Exception as ce:
+                                    logger.error(f"Compare with golden failed for {mem.ps.filename}: {ce}")
+                                    mem.time_perf = None
+                                    mem.eff_perf = None
+                            else:
+                                mem.time_perf = None
+                                mem.eff_perf  = None
+
                         except Exception as e:
                             logger.error(f"TritonBench performance calculation failed for {mem.ps.filename}: {e}")
                             mem.pass_perf = False
@@ -317,6 +432,11 @@ class OptimAgent(Reflexion_Oneshot):
                     mem.ps.solution = mem.call_candidate
                 else:
                     mem.ps.solution = mem.raw_code[0]
+            #     # 保存当前最佳 kernel 源码
+            # try:
+            #     self._save_best_kernel(mem, iter_idx=iter)
+            # except Exception as e:
+            #     logger.warning(f"Failed to save best kernel for {mem.ps.filename}: {e}")
 
             if output_path is not None:
                 self.dataset.write_file(iter_path, start_idx=start_idx, datalen=data_len)
@@ -325,6 +445,67 @@ class OptimAgent(Reflexion_Oneshot):
             # os.system(f'rm -rf {exe_dir}')
             # os.system(f'rm -rf {perf_result_dir}')
             # os.system(f'rm -rf {perf_log_dir}')
+        
+        # ===== 所有迭代结束后：生成 vs 金标 对比与最优 kernel 保存 =====
+        try:
+            if output_path is None or (hasattr(self.dataset, 'rocm_tests') and self.dataset.rocm_tests):
+                perf_result_dir = "perf_results"
+            else:
+                root, extension = os.path.splitext(output_path)
+                perf_result_dir = f"{root}_perf_results"
+                best_dir = f"{root}_best_kernels"
+                cmp_dir = f"{root}_perf_compare"
+
+            golden_dir = perf_result_dir + "_golden"  # 你前面跑金标时用的目录
+
+            for mem in self.memories:
+                op = mem.ps.filename[:-3]
+                gen_json = os.path.join(perf_result_dir, f"{op}.json")
+                gold_json = os.path.join(golden_dir, f"{op}.json")
+                if not (os.path.exists(gen_json) and os.path.exists(gold_json)):
+                    continue
+
+                gen_data   = self._load_perf_json(gen_json)
+                golden_data= self._load_perf_json(gold_json)
+                aligned    = self._align_perf_by_size(gen_data, golden_data)
+                report     = self._build_compare_report(aligned)
+                out_path   = self._save_compare_report(op, report, out_dir=cmp_dir)
+
+                try:
+                    self._save_best_kernel(mem, iter_idx="final", out_dir=best_dir)
+                except Exception as e:
+                    logger.warning(f"Failed to save best kernel for {op}: {e}")
+
+                logger.info(f"[{op}] perf compare saved to: {out_path}")
+        except Exception as e:
+            logger.error(f"Post-run perf compare failed: {e}")
+
+
+    def _save_best_kernel(self, mem, iter_idx, out_dir="best_kernels"):
+        """把当前最佳 kernel 的源码保存下来。"""
+        if not mem.perf_candidates:
+            return
+        best_code, best_ms, best_eff, best_reflection = mem.perf_candidates[-1]
+        os.makedirs(out_dir, exist_ok=True)
+
+        op_name = mem.ps.filename[:-3] 
+        best_path_latest = os.path.join(out_dir, f"{op_name}__best.py")
+        with open(best_path_latest, "w") as f:
+            f.write(best_code)
+
+        # 保留每一轮的数据，配合iter中的注释代码使用
+        # tag_ms = f"{best_ms:.6f}".replace('.', '_')
+        # best_path_versioned = os.path.join(out_dir, f"{op_name}__it{iter_idx}__{tag_ms}ms.py")
+        # with open(best_path_versioned, "w") as f:
+        #     f.write(best_code)
+
+    def _save_compare_report(self, op_name, report, out_dir="perf_compare"):
+        os.makedirs(out_dir, exist_ok=True)
+        out_path = os.path.join(out_dir, f"{op_name}.json")
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2)
+        return out_path
+
     
     def generate_solution(self, mem, temperature=0):
 
@@ -385,7 +566,7 @@ class OptimAgent(Reflexion_Oneshot):
         ]
 
         try:
-            response = self.model.generate(msg, temperature=temperature, max_tokens=1024)
+            response = self.model.generate(msg, temperature=temperature, max_tokens=4096)
         except:
             logger.info(f"failed to call LLM for {mem.ps.filename}")
             response = {"code": ""}

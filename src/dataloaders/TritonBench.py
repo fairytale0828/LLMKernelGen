@@ -31,7 +31,7 @@ class TritonBench:
         self.perf_ref_folder = perf_ref_folder
         self.perf_G_path = perf_G_path
         self.result_path = result_path
-
+        self.target_kernels = target_kernels
         self.problem_states = self.load_ps(result_path, target_kernels)
     
     def load_ps(self, path, target_kernels=None):
@@ -120,7 +120,7 @@ class TritonBench:
                 temp_file.write(script_content + "\n" + "#" * 146 + "\n" + ps.test_code)
 
             env = os.environ.copy()
-            env["HIP_VISIBLE_DEVICES"] = str(gpu_id)
+            env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
             # Run the temporary Python file
             result = subprocess.run(
                 ["python", temp_path], 
@@ -141,7 +141,7 @@ class TritonBench:
             return False, str(e)
     
     
-    def write_perf_file(self, input_folder_path, results_path, tmp_dir):
+    def write_perf_file(self, input_folder_path, results_path, tmp_dir, include_files=None):
         """
         input_folder_path: the folder path where codes that pass call and exe tests are stored
         results_path: the folder where perf results (json files) are stored
@@ -166,7 +166,15 @@ class TritonBench:
         performance_utils = "".join(performance_utils_lines)
         with open(performance_utils_path, 'w') as f:
             f.write(performance_utils)
-        input_file_list = os.listdir(input_folder_path)
+        # input_file_list = os.listdir(input_folder_path)
+        # 支持include_files参数，只跑部分op的perf测试
+        input_file_list = [f for f in os.listdir(input_folder_path) if f.endswith(".py")]
+        if include_files:
+            include_set = set(include_files)
+            norm = lambda s: s if s.endswith(".py") else s + ".py"
+            include_set = {norm(x) for x in include_set}
+            input_file_list = [f for f in input_file_list if f in include_set]
+
         golden_metrics_list = os.listdir(self.golden_metrics_folder)
         for file in input_file_list:
             if file[-3:] == ".py":
@@ -182,7 +190,7 @@ class TritonBench:
                         if line == "sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))\n":
                             updated_lines.append(f"sys.path.append('{input_folder_path}')\n")
                             updated_lines.append(f"sys.path.append('{self.perf_G_path}')\n")
-                        line = line.replace("from TritonBench_v1.", "from ")
+                        line = line.replace("from TritonBench_G_v1.", "from ")
                         line = line.replace("op_perf.get_do_bench_config()", "op_perf.get_do_bench_config(warmup=100, rep=1000)")
                         line = line.replace('folder_path = "/home/lishangzhan/triton/bench_performance/results"', f'folder_path = "{results_path}"')
                         updated_lines.append(line)
@@ -219,7 +227,7 @@ class TritonBench:
         log_file = os.path.join(log_dir, f"{script_name}.log")
         err_file = os.path.join(log_dir, f"{script_name}.err")
 
-        cmd = f"HIP_VISIBLE_DEVICES={gpu_id} python {script}"
+        cmd = f"CUDA_VISIBLE_DEVICES={gpu_id} python {script}"
         # print(f"Running: {cmd}")
 
         with open(log_file, "w") as log, open(err_file, "w") as err:
@@ -269,12 +277,12 @@ class TritonBench:
                 # log_file = os.path.join(log_dir, f"{script_name}.log")
                 # err_file = os.path.join(log_dir, f"{script_name}.err")
 
-                # cmd = f"HIP_VISIBLE_DEVICES={gpu_id} python {script}"
+                # cmd = f"CUDA_VISIBLE_DEVICES={gpu_id} python {script}"
                 # print(f"Running: {cmd}")
 
                 # with open(log_file, "w") as log, open(err_file, "w") as err:
                 env = os.environ.copy()
-                env["HIP_VISIBLE_DEVICES"] = str(gpu_id)
+                env["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
                 try:
                     result = subprocess.run(
                             [self.py_interpreter, script], 
