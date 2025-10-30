@@ -22,7 +22,8 @@ def main():
                           target_kernels=args.target_kernels)
 
     # setup agent
-    agent = OptimAgent(model=model, dataset=dataset, corpus_path=args.corpus_path, mem_file=args.mem_file)
+    docs_path = getattr(args, 'docs_path', 'docs')
+    agent = OptimAgent(model=model, dataset=dataset, corpus_path=args.corpus_path, mem_file=args.mem_file, docs_path=docs_path)
 
     # run the agent
     agent.run(output_path=args.output_path, 
