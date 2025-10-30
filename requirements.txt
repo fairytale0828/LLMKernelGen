@@ -1,18 +1,42 @@
-triton==3.1.0
-parse_llm_code
-pandas
+# ---- Base ----
 numpy==1.26
-openai==1.75.0
+pandas
 tqdm
-torch
-datasets==3.6.0
-huggingface-hub
-multiprocess
-protobuf==3.20.3
-PyYAML
+
+# 仅用于解析 LLM 代码块；若网络经常拉不下，可用本地同名模块替代
+parse_llm_code
+
+# ---- HF / LLM ----
 transformers
+huggingface-hub
+datasets==3.6.0
+pyarrow==16.1.0
+multiprocess
+
+# ---- OpenAI & friends ----
+openai>=1.104.2,<3
+
+# ---- Utils ----
+PyYAML
 regex
 requests
 rank-bm25
 loguru
 tenacity
+
+# ---- RAG 基础（LangChain 生态）----
+# 说明：langchain-* 家族与 langchain-core 需保持 <1.0
+langchain==0.3.27
+langchain-core==0.3.78
+langchain-community==0.3.16
+langchain-openai==0.3.35
+
+# 使用新版插件包的 HF Embeddings（替代已弃用的 langchain.embeddings.HuggingFaceEmbeddings）
+langchain-huggingface==0.1.0
+
+# 向量库与文本向量
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
+
+# ---- Runtime deps that often conflict ----
+protobuf>=5.26.1,<6

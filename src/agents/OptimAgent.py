@@ -8,12 +8,21 @@ from memories.Memory import MemoryClassMeta
 from prompts import prompt_for_generation, prompt_for_reflection
 from loguru import logger
 from tenacity import RetryError
+from retrievers.langchain_rag import create_rag_retriever
 
 
 class OptimAgent(Reflexion_Oneshot):
-    def __init__(self, model, dataset, corpus_path, max_perf_debug_num=5, mem_file=None):
+    def __init__(self, model, dataset, corpus_path, max_perf_debug_num=5, mem_file=None, docs_path="docs"):
         super().__init__(model, dataset, corpus_path, mem_file)
         self.max_perf_debug_num = max_perf_debug_num
+        
+        # Initialize RAG retriever
+        try:
+            self.rag_retriever = create_rag_retriever(docs_path)
+            logger.info("RAG retriever initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize RAG retriever: {e}")
+            self.rag_retriever = None
 
     def memory_init(self, mem_file=None):
         """
@@ -479,6 +488,13 @@ class OptimAgent(Reflexion_Oneshot):
                 logger.info(f"[{op}] perf compare saved to: {out_path}")
         except Exception as e:
             logger.error(f"Post-run perf compare failed: {e}")
+        
+        # Generate RAG usage report
+        if output_path:
+            self._save_rag_usage_report(output_path)
+        
+        # Print RAG usage summary
+        self._print_rag_usage_summary()
 
 
     def _save_best_kernel(self, mem, iter_idx, out_dir="best_kernels"):
@@ -515,6 +531,11 @@ class OptimAgent(Reflexion_Oneshot):
             instruction=mem.ps.instruction,
             function_signatures=fss_text
         )
+        
+        # Add RAG-enhanced context
+        rag_context = self._get_rag_context(mem)
+        if rag_context:
+            text += f"\n\n## Additional Context from Knowledge Base:\n{rag_context}"
 
         # for the one that has perf_candidates, and the code generated in this round pass_exe, we need to generate a new code
         # for the one that has perf_candidates, but the code generated in this round not pass_exe, if the debug_num has exceeds the man_debug_num, then generate a new code
@@ -634,3 +655,204 @@ class OptimAgent(Reflexion_Oneshot):
         ]
         mem.reflection = self.model.generate(reflect_msg, temperature=temperature)
 
+    def _get_rag_context(self, mem) -> str:
+        """
+        Get RAG-enhanced context for the current operator
+        
+        Args:
+            mem: Memory object containing problem state
+            
+        Returns:
+            Formatted context string from RAG retrieval
+        """
+        if not self.rag_retriever:
+            logger.info(f"[{mem.ps.filename}] RAG retriever not available - using base generation")
+            return ""
+        
+        try:
+            # Get context for the specific operator
+            context = self.rag_retriever.get_context_for_operator(
+                operator_name=mem.ps.filename,
+                instruction=mem.ps.instruction
+            )
+            
+            formatted_context = ""
+            rag_usage_info = []
+            
+            # Add hardware context
+            if context.get('hardware_context'):
+                hw_length = len(context['hardware_context'])
+                formatted_context += "### Hardware Characteristics:\n"
+                formatted_context += context['hardware_context'][:800] + "\n\n"
+                rag_usage_info.append(f"Hardware: {hw_length} chars")
+            
+            # Add tutorial context
+            if context.get('tutorial_context'):
+                tutorial_length = len(context['tutorial_context'])
+                formatted_context += "### Reference Implementation:\n"
+                formatted_context += context['tutorial_context'][:1000] + "\n\n"
+                rag_usage_info.append(f"Tutorial: {tutorial_length} chars")
+            
+            # Add optimization context
+            if context.get('optimization_context'):
+                opt_length = len(context['optimization_context'])
+                formatted_context += "### Optimization Techniques:\n"
+                formatted_context += context['optimization_context'][:800] + "\n\n"
+                rag_usage_info.append(f"Optimization: {opt_length} chars")
+            
+            # Log RAG usage
+            if rag_usage_info:
+                logger.info(f"[{mem.ps.filename}] 🔍 RAG Enhanced: {', '.join(rag_usage_info)}")
+                # Store RAG usage info in memory for later analysis
+                if not hasattr(mem, 'rag_usage'):
+                    mem.rag_usage = []
+                mem.rag_usage.append({
+                    'iteration': len(mem.raw_code) if hasattr(mem, 'raw_code') else 0,
+                    'sources': rag_usage_info,
+                    'total_context_length': len(formatted_context)
+                })
+            else:
+                logger.info(f"[{mem.ps.filename}] ⚠️  No relevant RAG context found")
+            
+            return formatted_context.strip()
+            
+        except Exception as e:
+            logger.warning(f"Failed to get RAG context for {mem.ps.filename}: {e}")
+            return ""
+    
+    def _format_rag_context_for_optimization(self, mem, context: dict) -> str:
+        """
+        Format RAG context specifically for optimization phase
+        
+        Args:
+            mem: Memory object
+            context: RAG context dictionary
+            
+        Returns:
+            Formatted optimization context
+        """
+        if not context:
+            return ""
+        
+        formatted = "\n## Knowledge Base Guidance:\n"
+        
+        # Focus on optimization techniques for performance improvement
+        if context.get('optimization_context'):
+            formatted += "### Optimization Strategies:\n"
+            formatted += context['optimization_context'][:600] + "\n"
+        
+        # Add relevant hardware considerations
+        if context.get('hardware_context'):
+            formatted += "### Hardware Considerations:\n"
+            formatted += context['hardware_context'][:400] + "\n"
+        
+        return formatted    
+    def _save_rag_usage_report(self, output_path: str):
+        """
+        Save RAG usage report for analysis
+        
+        Args:
+            output_path: Base output path for saving reports
+        """
+        if not output_path:
+            return
+            
+        try:
+            root, _ = os.path.splitext(output_path)
+            report_path = f"{root}_rag_usage.json"
+            
+            rag_report = {
+                'summary': {
+                    'total_operators': len(self.memories),
+                    'rag_enabled_operators': 0,
+                    'total_rag_retrievals': 0,
+                    'avg_context_length': 0
+                },
+                'per_operator': {}
+            }
+            
+            total_context_length = 0
+            total_retrievals = 0
+            
+            for mem in self.memories:
+                operator_name = mem.ps.filename
+                
+                if hasattr(mem, 'rag_usage') and mem.rag_usage:
+                    rag_report['summary']['rag_enabled_operators'] += 1
+                    
+                    operator_stats = {
+                        'iterations_with_rag': len(mem.rag_usage),
+                        'total_context_chars': sum(usage['total_context_length'] for usage in mem.rag_usage),
+                        'sources_used': {},
+                        'usage_per_iteration': mem.rag_usage
+                    }
+                    
+                    # Count source usage
+                    for usage in mem.rag_usage:
+                        for source in usage['sources']:
+                            source_type = source.split(':')[0]
+                            operator_stats['sources_used'][source_type] = operator_stats['sources_used'].get(source_type, 0) + 1
+                    
+                    rag_report['per_operator'][operator_name] = operator_stats
+                    total_context_length += operator_stats['total_context_chars']
+                    total_retrievals += operator_stats['iterations_with_rag']
+                else:
+                    rag_report['per_operator'][operator_name] = {
+                        'iterations_with_rag': 0,
+                        'total_context_chars': 0,
+                        'sources_used': {},
+                        'note': 'No RAG usage recorded'
+                    }
+            
+            # Update summary
+            rag_report['summary']['total_rag_retrievals'] = total_retrievals
+            if total_retrievals > 0:
+                rag_report['summary']['avg_context_length'] = total_context_length / total_retrievals
+            
+            # Save report
+            with open(report_path, 'w', encoding='utf-8') as f:
+                json.dump(rag_report, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"📊 RAG usage report saved to: {report_path}")
+            
+            # Print summary
+            summary = rag_report['summary']
+            logger.info(f"📈 RAG Summary: {summary['rag_enabled_operators']}/{summary['total_operators']} operators used RAG, "
+                       f"{summary['total_rag_retrievals']} total retrievals, "
+                       f"avg {summary['avg_context_length']:.0f} chars per retrieval")
+            
+        except Exception as e:
+            logger.error(f"Failed to save RAG usage report: {e}")
+    
+    def _print_rag_usage_summary(self):
+        """Print a summary of RAG usage to console"""
+        if not self.rag_retriever:
+            print("🚫 RAG not enabled")
+            return
+        
+        print("\n" + "="*60)
+        print("📊 RAG USAGE SUMMARY")
+        print("="*60)
+        
+        total_operators = len(self.memories)
+        rag_enabled = 0
+        source_usage = {'Hardware': 0, 'Tutorial': 0, 'Optimization': 0}
+        
+        for mem in self.memories:
+            if hasattr(mem, 'rag_usage') and mem.rag_usage:
+                rag_enabled += 1
+                print(f"✅ {mem.ps.filename}: {len(mem.rag_usage)} iterations with RAG")
+                
+                # Count source types
+                for usage in mem.rag_usage:
+                    for source in usage['sources']:
+                        source_type = source.split(':')[0]
+                        if source_type in source_usage:
+                            source_usage[source_type] += 1
+            else:
+                print(f"❌ {mem.ps.filename}: No RAG usage")
+        
+        print(f"\n📈 Overall: {rag_enabled}/{total_operators} operators used RAG")
+        print(f"📚 Source Usage: Hardware={source_usage['Hardware']}, "
+              f"Tutorial={source_usage['Tutorial']}, Optimization={source_usage['Optimization']}")
+        print("="*60)

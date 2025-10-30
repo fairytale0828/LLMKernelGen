@@ -1,0 +1,11 @@
+# 固定容易“被别的包带着升级”的关键版本
+langchain==0.3.27
+langchain-core==0.3.78
+langchain-community==0.3.16
+langchain-openai==0.3.35
+langchain-huggingface==0.1.0
+pyarrow==16.1.0
+# protobuf>=5.26.1,<6
+openai>=1.104.2,<3
+protobuf==3.20.3
+faiss-cpu==1.8.0

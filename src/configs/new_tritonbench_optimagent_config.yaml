@@ -17,10 +17,14 @@ mem_file: null
 start_iter: 0
 datalen: null
 start_idx: 0
-target_kernels: ["layernorm_fwd_triton.py"]
+target_kernels: ["matmul_kernel.py"]
 
 # agent
-output_path: "../outputs/layernorm_fwd_triton.jsonl"
-max_iteration: 20
+output_path: "../outputs/matmul_kernel.jsonl"
+max_iteration: 3
 multi_thread: true
 ancestor_num: 5
+
+# RAG settings
+docs_path: "docs"
+enable_rag: true
