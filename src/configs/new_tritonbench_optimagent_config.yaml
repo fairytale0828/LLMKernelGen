@@ -21,7 +21,7 @@ target_kernels: ["matmul_kernel.py"]
 
 # agent
 output_path: "../outputs/matmul_kernel.jsonl"
-max_iteration: 3
+max_iteration: 5
 multi_thread: true
 ancestor_num: 5
 
