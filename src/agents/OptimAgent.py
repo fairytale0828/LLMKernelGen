@@ -679,26 +679,56 @@ class OptimAgent(Reflexion_Oneshot):
             formatted_context = ""
             rag_usage_info = []
             
-            # Add hardware context
+            # Add hardware context (limit to 800 chars for better prompt efficiency)
             if context.get('hardware_context'):
-                hw_length = len(context['hardware_context'])
+                hw_content = context['hardware_context']
+                hw_length = len(hw_content)
+                # Take first 800 chars and try to end at sentence boundary
+                truncated_hw = hw_content[:800]
+                if len(hw_content) > 800:
+                    # Try to end at sentence or line boundary
+                    last_period = truncated_hw.rfind('.')
+                    last_newline = truncated_hw.rfind('\n')
+                    if last_period > 600 or last_newline > 600:
+                        truncated_hw = truncated_hw[:max(last_period, last_newline) + 1]
+                
                 formatted_context += "### Hardware Characteristics:\n"
-                formatted_context += context['hardware_context'][:800] + "\n\n"
-                rag_usage_info.append(f"Hardware: {hw_length} chars")
+                formatted_context += truncated_hw + "\n\n"
+                rag_usage_info.append(f"Hardware: {len(truncated_hw)} chars")
             
-            # Add tutorial context
+            # Add tutorial context (limit to 1000 chars)
             if context.get('tutorial_context'):
-                tutorial_length = len(context['tutorial_context'])
+                tutorial_content = context['tutorial_context']
+                tutorial_length = len(tutorial_content)
+                truncated_tutorial = tutorial_content[:1000]
+                if len(tutorial_content) > 1000:
+                    # Try to end at code block or sentence boundary
+                    last_code = truncated_tutorial.rfind('```')
+                    last_period = truncated_tutorial.rfind('.')
+                    if last_code > 700:
+                        truncated_tutorial = tutorial_content[:last_code]
+                    elif last_period > 700:
+                        truncated_tutorial = truncated_tutorial[:last_period + 1]
+                
                 formatted_context += "### Reference Implementation:\n"
-                formatted_context += context['tutorial_context'][:1000] + "\n\n"
-                rag_usage_info.append(f"Tutorial: {tutorial_length} chars")
+                formatted_context += truncated_tutorial + "\n\n"
+                rag_usage_info.append(f"Tutorial: {len(truncated_tutorial)} chars")
             
-            # Add optimization context
+            # Add optimization context (limit to 800 chars)
             if context.get('optimization_context'):
-                opt_length = len(context['optimization_context'])
+                opt_content = context['optimization_context']
+                opt_length = len(opt_content)
+                truncated_opt = opt_content[:800]
+                if len(opt_content) > 800:
+                    # Try to end at sentence or bullet point
+                    last_period = truncated_opt.rfind('.')
+                    last_bullet = truncated_opt.rfind('\n-')
+                    if last_period > 600 or last_bullet > 600:
+                        truncated_opt = truncated_opt[:max(last_period, last_bullet) + 1]
+                
                 formatted_context += "### Optimization Techniques:\n"
-                formatted_context += context['optimization_context'][:800] + "\n\n"
-                rag_usage_info.append(f"Optimization: {opt_length} chars")
+                formatted_context += truncated_opt + "\n\n"
+                rag_usage_info.append(f"Optimization: {len(truncated_opt)} chars")
             
             # Log RAG usage
             if rag_usage_info:

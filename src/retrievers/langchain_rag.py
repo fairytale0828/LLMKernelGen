@@ -33,7 +33,7 @@ class TritonRAGRetriever:
     """
     
     def __init__(self, docs_path: str = "docs", embedding_model: str = "all-MiniLM-L6-v2", 
-                 cache_dir: str = ".rag_cache", use_cache: bool = True):
+                 cache_dir: str = "../.rag_cache", use_cache: bool = True):
         if not LANGCHAIN_AVAILABLE:
             raise ImportError("LangChain dependencies not available")
             
@@ -44,7 +44,7 @@ class TritonRAGRetriever:
         self.embeddings = None
         self.vectorstores = {}
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
+            chunk_size=800,
             chunk_overlap=200,
             length_function=len,
         )
@@ -104,8 +104,12 @@ class TritonRAGRetriever:
             
             if use_cached:
                 try:
-                    # Load from cache
-                    vectorstore = FAISS.load_local(str(cache_path), self.embeddings)
+                    # Load from cache with security parameter
+                    vectorstore = FAISS.load_local(
+                        str(cache_path), 
+                        self.embeddings, 
+                        allow_dangerous_deserialization=True
+                    )
                     self.vectorstores[doc_type] = vectorstore
                     print(f"✓ Loaded {doc_type} vectorstore from cache")
                     continue
@@ -189,7 +193,7 @@ class TritonRAGRetriever:
     
     def get_context_for_operator(self, operator_name: str, instruction: str) -> Dict[str, str]:
         """
-        Get relevant context for a specific operator
+        Get relevant context for a specific operator with enhanced query strategy
         
         Args:
             operator_name: Name of the operator (e.g., 'matmul', 'layernorm')
@@ -207,27 +211,77 @@ class TritonRAGRetriever:
         if not self.embeddings:
             return context
         
-        # Extract operator type from name
+        # Extract operator type from name with enhanced mapping
         op_type = self._extract_operator_type(operator_name)
         
-        # Query hardware info
-        hw_query = f"{op_type} GPU memory bandwidth occupancy shared memory"
-        hw_results = self.query_hardware_info(hw_query, top_k=2)
+        # Enhanced query building with fallback
+        try:
+            # Query hardware info with enhanced terms
+            hw_query = f"{op_type} GPU memory bandwidth occupancy shared memory tensor core warp"
+            hw_results = self.query_hardware_info(hw_query, top_k=3)
+            if hw_results:
+                context['hardware_context'] = "\n\n".join([r['content'] for r in hw_results])
+            
+            # Query tutorials with multiple strategies
+            tutorial_queries = [
+                f"{op_type} triton implementation kernel",
+                f"{op_type} example code snippet",
+                f"triton {op_type} tutorial"
+            ]
+            
+            all_tutorial_results = []
+            for tq in tutorial_queries:
+                results = self.query_tutorials(tq, top_k=2)
+                all_tutorial_results.extend(results)
+            
+            # Deduplicate and take best results
+            seen_content = set()
+            unique_results = []
+            for result in all_tutorial_results:
+                content_hash = hash(result['content'][:100])  # Hash first 100 chars
+                if content_hash not in seen_content:
+                    seen_content.add(content_hash)
+                    unique_results.append(result)
+                    if len(unique_results) >= 3:
+                        break
+            
+            if unique_results:
+                context['tutorial_context'] = "\n\n".join([r['content'] for r in unique_results])
+            
+            # Query optimization techniques with enhanced terms
+            opt_query = f"{op_type} optimization memory coalescing block size num_warps performance"
+            opt_results = self.query_optimization(opt_query, top_k=3)
+            if opt_results:
+                context['optimization_context'] = "\n\n".join([r['content'] for r in opt_results])
+                
+        except Exception as e:
+            print(f"Error in enhanced context retrieval: {e}")
+            # Fallback to simple retrieval
+            return self._simple_context_retrieval(op_type, instruction)
+        
+        return context
+    
+    def _simple_context_retrieval(self, op_type: str, instruction: str) -> Dict[str, str]:
+        """Fallback simple context retrieval"""
+        context = {
+            'hardware_context': '',
+            'tutorial_context': '',
+            'optimization_context': ''
+        }
+        
+        # Simple queries as fallback
+        hw_results = self.query_hardware_info(f"{op_type} GPU", top_k=2)
         if hw_results:
-            context['hardware_context'] = "\n".join([r['content'] for r in hw_results])
-        
-        # Query tutorials
-        tutorial_query = f"{op_type} triton implementation kernel"
-        tutorial_results = self.query_tutorials(tutorial_query, top_k=2)
+            context['hardware_context'] = hw_results[0]['content']
+            
+        tutorial_results = self.query_tutorials(f"{op_type} triton", top_k=2)
         if tutorial_results:
-            context['tutorial_context'] = "\n".join([r['content'] for r in tutorial_results])
-        
-        # Query optimization techniques
-        opt_query = f"{op_type} optimization memory coalescing block size"
-        opt_results = self.query_optimization(opt_query, top_k=2)
+            context['tutorial_context'] = tutorial_results[0]['content']
+            
+        opt_results = self.query_optimization(f"{op_type} optimization", top_k=2)
         if opt_results:
-            context['optimization_context'] = "\n".join([r['content'] for r in opt_results])
-        
+            context['optimization_context'] = opt_results[0]['content']
+            
         return context
     
     def _extract_operator_type(self, operator_name: str) -> str:
