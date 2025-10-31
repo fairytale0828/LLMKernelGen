@@ -33,7 +33,7 @@ class TritonRAGRetriever:
     """
     
     def __init__(self, docs_path: str = "docs", embedding_model: str = "all-MiniLM-L6-v2", 
-                 cache_dir: str = ".rag_cache", use_cache: bool = True):
+                 cache_dir: str = "../.rag_cache", use_cache: bool = True):
         if not LANGCHAIN_AVAILABLE:
             raise ImportError("LangChain dependencies not available")
             
@@ -44,7 +44,7 @@ class TritonRAGRetriever:
         self.embeddings = None
         self.vectorstores = {}
         self.text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
+            chunk_size=800,
             chunk_overlap=200,
             length_function=len,
         )
